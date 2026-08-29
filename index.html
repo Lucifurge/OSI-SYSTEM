@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f97316">
+<title>OSI Inventory · Sign In</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+<main class="auth-grid">
+<section class="auth-brand">
+  <div>
+    <div class="brand-row"><div class="logo-mark">OSI</div><div><b>OSI INVENTORY</b><span>Student Body Organization</span></div></div>
+    <div class="auth-copy">
+      <div class="eyebrow">FEBIAS College of Bible</div>
+      <h1>Manage.<br>Track.<br>Account.</h1>
+      <p>Inventory, borrowing, cash funds, expenses and reports for the OSI student council.</p>
+    </div>
+  </div>
+  <small>White · Black · OSI Orange</small>
+</section>
+<section class="auth-panel">
+  <div class="mobile-brand brand-row"><div class="logo-mark">OSI</div><div><b>OSI INVENTORY</b><span>FEBIAS College of Bible</span></div></div>
+  <div class="auth-card">
+    <div class="eyebrow">Student Body Organization</div>
+    <h2 id="heading">Welcome back</h2><p id="sub">Sign in to your OSI account.</p>
+    <form id="form" class="form-stack">
+      <label>Email<input id="email" type="email" autocomplete="email" required></label>
+      <label>Password<input id="password" type="password" autocomplete="current-password" minlength="6" required></label>
+      <div id="nameWrap" class="hidden"><label>Full name<input id="name" autocomplete="name"></label></div>
+      <button id="submit" class="btn btn-primary">Sign In</button>
+    </form>
+    <button id="toggle" class="link-button">Create an account</button>
+    <button id="forgot" class="link-button muted">Forgot password?</button>
+    <p class="auth-note">If email confirmation is enabled in Supabase, confirm your email before signing in.</p>
+  </div>
+</section>
+</main>
+<script type="module">
+import { supabase, toast } from "./js/app.js";
+const $=id=>document.getElementById(id);
+let signup=false;
+const {data:{session}}=await supabase.auth.getSession();
+if(session) location.href="dashboard.html";
+$("toggle").onclick=()=>{signup=!signup;$("heading").textContent=signup?"Create your account":"Welcome back";$("sub").textContent=signup?"Register for OSI Inventory.":"Sign in to your OSI account.";$("submit").textContent=signup?"Create Account":"Sign In";$("nameWrap").classList.toggle("hidden",!signup);$("toggle").textContent=signup?"Already have an account? Sign in":"Create an account";$("forgot").classList.toggle("hidden",signup)};
+$("forgot").onclick=async()=>{const email=$("email").value.trim();if(!email)return toast("Enter your email first.",false);const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname.replace("index.html","profile.html")});if(error)toast(error.message,false);else toast("Password reset email sent.")};
+$("form").onsubmit=async e=>{e.preventDefault();$("submit").disabled=true;try{
+ if(signup){const {data,error}=await supabase.auth.signUp({email:$("email").value.trim(),password:$("password").value,options:{data:{full_name:$("name").value.trim()||"New User"}}});if(error)throw error;toast(data.session?"Account created.":"Account created. Check your email to confirm.");if(data.session)setTimeout(()=>location.href="dashboard.html",600)}
+ else {const {data,error}=await supabase.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)throw error;if(data.session)location.href="dashboard.html"}
+ }catch(err){toast(err.message||"Authentication failed.",false)}finally{$("submit").disabled=false}};
+</script>
+</body></html>
